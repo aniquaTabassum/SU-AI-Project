@@ -3,6 +3,8 @@ import java.util.*;
 public class Main {
 
     public static void main(String[] args) {
+        PriorityQueue<State> pq = new PriorityQueue<>((a, b) -> b.sum-a.sum);
+
         int size = 4;
         int numOfMoves = 3;
         int numOfNodes = calculateNumOfNodes(numOfMoves, 4);
@@ -11,7 +13,7 @@ public class Main {
         int currStateNum = 1;
         String move = "";
         board = initArray(board, 8, size, initTileValues);
-        board = new int[][]{ {2, 0, 2, 0},{0, 0, 4, 4}, {0, 4, 4, 4}, {0, 0, 0, 0}};
+        //board = new int[][]{ {2, 0, 2, 0},{0, 0, 4, 4}, {0, 4, 4, 4}, {0, 0, 0, 0}};
         State root = new State( currStateNum);
         root.stateBoard = board;
         root.prevBoard = board;
@@ -35,18 +37,41 @@ public class Main {
                 }
                 State state = new State(currStateNum);
                 state.prevBoard = currNode.stateBoard;
+                state.prevSum = currNode.sum;
                 state.stateBoard = new int[4][4];
                 returnMove(state, move);
                 addRandomTwo(state);
                 queue.add(state);
                 printArray(state.stateBoard);
-                System.out.println(" ");
+
+                System.out.println("");
+                if(currStateNum >= 22){
+                pq.add(state);}
                 currStateNum+=1;
 
             }
 
         }
-       System.out.println(currStateNum);
+       State bestState = pq.remove();
+        System.out.println("Highest possible sum is "+bestState.sum);
+        int bestStateNum = bestState.nodeNum;
+        int remainder = 0;
+       System.out.println(" ");
+        for(int i=0; i<numOfMoves; i++){
+            remainder = (int)(bestStateNum % 4);
+            bestStateNum = (int) Math.ceil(bestStateNum / 4);
+            if(remainder == 2){
+                System.out.print("U ");
+            } else if (remainder == 3) {
+                System.out.print("D ");
+            }
+            else if (remainder == 0) {
+                System.out.print("L ");
+            }
+            else if (remainder == 1) {
+                System.out.print("R ");
+            }
+        }
        //returnMove(root, "up");
     }
 
@@ -130,7 +155,7 @@ public class Main {
             }
 
 
-            sumList.add(findSum(boardRight, move));
+            tempState.sum = findSum(boardRight, move) + tempState.prevSum;
             tempState.stateBoard = new int[tempBoard.length][tempBoard[0].length];
             for (int i = 0; i < boardRight[0].length; i++) {
                 tempState.stateBoard[i] = boardRight[i].clone();
@@ -162,7 +187,7 @@ public class Main {
                 columnTraverse = 0;
             }
 
-            sumList.add(findSum(boardLeft, move));
+            tempState.sum = findSum(boardLeft, move) + tempState.prevSum;
             for (int i = 0; i < boardLeft[0].length; i++) {
                 tempState.stateBoard[i] = boardLeft[i].clone();
             }
@@ -191,7 +216,7 @@ public class Main {
             }
 
 
-            sumList.add(findSum(boardUp, move));
+            tempState.sum = findSum(boardUp, move) + tempState.prevSum;
            // printArray(boardUp);
             for (int i = 0; i < boardUp[0].length; i++) {
                 tempState.stateBoard[i] = boardUp[i].clone();
@@ -219,7 +244,7 @@ public class Main {
             }
 
 
-            sumList.add(findSum(boardDown, move));
+            tempState.sum = findSum(boardDown, move) + tempState.prevSum;
            // printArray(boardDown);
             for (int i = 0; i < boardDown[0].length; i++) {
                 tempState.stateBoard[i] = boardDown[i].clone();
@@ -434,6 +459,7 @@ class State{
     int nodeNum;
     int visited = 0;
     int sum = 0;
+    int prevSum = 0;
     int nextStateNum = -1;
 
     public State( int nodeNum){
