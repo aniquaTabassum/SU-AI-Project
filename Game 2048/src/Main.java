@@ -1,16 +1,80 @@
 import java.util.*;
 
 public class Main {
+
     public static void main(String[] args) {
         int size = 4;
+        int numOfMoves = 3;
+        int numOfNodes = calculateNumOfNodes(numOfMoves, 4);
         int[][] board = new int[size][size];
         int[] initTileValues = new int[]{2, 4, 8, 16};
+        int currStateNum = 1;
+        String move = "";
         board = initArray(board, 8, size, initTileValues);
         board = new int[][]{ {2, 0, 2, 0},{0, 0, 4, 4}, {0, 4, 4, 4}, {0, 0, 0, 0}};
-        printArray(board);
-        System.out.println("  ");
+        State root = new State( currStateNum);
+        root.stateBoard = board;
+        root.prevBoard = board;
+        LinkedList<State> queue = new LinkedList<State>();
+        root.visited = 1;
+        queue.add(root);
+        currStateNum++;
+        System.out.println(root.nodeNum);
+        while (queue.size() != 0 && currStateNum <= numOfNodes){
+            State currNode = queue.poll();
+            for(int i=0; i<4; i++){
+                if(i == 0){
+                    move = "up";
+                } else if (i == 1) {
+                    move = "down";
+                } else if (i == 2) {
+                    move = "left";
+                }
+                else {
+                    move = "right";
+                }
+                State state = new State(currStateNum);
+                state.prevBoard = currNode.stateBoard;
+                state.stateBoard = new int[4][4];
+                returnMove(state, move);
+                addRandomTwo(state);
+                queue.add(state);
+                printArray(state.stateBoard);
+                System.out.println(" ");
+                currStateNum+=1;
 
-       returnBestMove(board);
+            }
+
+        }
+       System.out.println(currStateNum);
+       //returnMove(root, "up");
+    }
+
+    public static void addRandomTwo(State state){
+        Random random = new Random();
+        ArrayList<Pair> emptyIndices = returnEmptyIndices(state.stateBoard);
+        Pair pickedIndice = emptyIndices.get(random.nextInt(emptyIndices.size()));
+        state.stateBoard[pickedIndice.first][pickedIndice.second] = 2;
+    }
+
+    public static ArrayList<Pair> returnEmptyIndices(int[][] board){
+        ArrayList<Pair> lisOfIndices = new ArrayList<Pair>();
+        for(int i=0; i<board.length; i++){
+            for(int j=0; j<board[0].length; j++){
+                if(board[i][j] == 0){
+                   Pair pair = new Pair(i, j);
+                   lisOfIndices.add(pair);
+
+                }
+            }
+        }
+        return lisOfIndices;
+    }
+
+    public static int calculateNumOfNodes(int numOfMoves, int childNodeSize){
+        double sum = Math.pow(childNodeSize, numOfMoves+1) - 1;
+        sum /= (childNodeSize-1);
+        return (int)Math.round(sum);
     }
 
     public static int[][] initArray(int[][] board, int initBoardFillNum, int size, int[] initTileValues){
@@ -31,123 +95,138 @@ public class Main {
         return board;
     }
 
-    public static String returnBestMove(int[][] tempBoard){
-        int[][] boardRight = new int[tempBoard.length][tempBoard[0].length];
-        int[][] boardLeft = new int[tempBoard.length][tempBoard[0].length];
-        int[][] boardUp = new int[tempBoard.length][tempBoard[0].length];
-        int[][] boardDown = new int[tempBoard.length][tempBoard[0].length];
+    public static String returnMove(State tempState, String move){
+        int sizeOfBoard = 4;
+        int[][] tempBoard = tempState.prevBoard;
+        int[][] boardRight = new int[4][4];
+        int[][] boardLeft = new int[4][4];
+        int[][] boardUp = new int[4][4];
+        int[][] boardDown = new int[4][4];
         String bestMove = "";
-        int column = tempBoard[0].length;
-        int row = tempBoard.length;
+        int column = sizeOfBoard;
+        int row = sizeOfBoard;
         List<Integer> sumList = new ArrayList<>();
 
-        String move = "right";
-
-        // For a right move
-        for(int i = 0; i<tempBoard[0].length; i++){
-            boardRight[i] = tempBoard[i].clone();
-        }
-        for(int i=0; i<row; i++){
-            for(int j =0; j<boardRight[0].length; j++){
-                int firstFilledColumn = findFilled(boardRight, i, column-1, move);
-                if(firstFilledColumn == -1){
-                    break;
-                }
-                int firstEmptyColumn = findEmpty(boardRight, i, column-1, move);
-                if(firstFilledColumn != -1 && firstEmptyColumn != -1 && firstFilledColumn < firstEmptyColumn){
-                    boardRight[i][firstEmptyColumn] = boardRight[i][firstFilledColumn];
-                    boardRight[i][firstFilledColumn] = 0;
-                }
-                column -=1;
-
+        if(move.equals("right")) {
+            // For a right move
+            for (int i = 0; i < tempBoard[0].length; i++) {
+                boardRight[i] = tempBoard[i].clone();
             }
-            column = boardRight[0].length;
-        }
+            for (int i = 0; i < row; i++) {
+                for (int j = 0; j < boardRight[0].length; j++) {
+                    int firstFilledColumn = findFilled(boardRight, i, column - 1, move);
+                    if (firstFilledColumn == -1) {
+                        break;
+                    }
+                    int firstEmptyColumn = findEmpty(boardRight, i, column - 1, move);
+                    if (firstFilledColumn != -1 && firstEmptyColumn != -1 && firstFilledColumn < firstEmptyColumn) {
+                        boardRight[i][firstEmptyColumn] = boardRight[i][firstFilledColumn];
+                        boardRight[i][firstFilledColumn] = 0;
+                    }
+                    column -= 1;
 
-
-
-        sumList.add(findSum(boardRight, move));
-        printArray(boardRight);
-        System.out.println("The sum is "+sumList.get(0));
-
-        // For a left move
-        move = "left";
-        for(int i = 0; i<tempBoard[0].length; i++){
-            boardLeft[i] = tempBoard[i].clone();
-        }
-        int columnTraverse = 0;
-        for(int i=0; i<row; i++){
-            for(int j =0; j<boardLeft[0].length; j++){
-                int firstFilledColumn = findFilled(boardLeft, i, columnTraverse, move);
-                if(firstFilledColumn == -1){
-                    break;
                 }
-                int firstEmptyColumn = findEmpty(boardLeft, i, columnTraverse, move);
-                if(firstFilledColumn != -1 && firstEmptyColumn != -1 && firstFilledColumn > firstEmptyColumn){
-                    boardLeft[i][firstEmptyColumn] = boardLeft[i][firstFilledColumn];
-                    boardLeft[i][firstFilledColumn] = 0;
-                }
-                columnTraverse +=1;
-
+                column = boardRight[0].length;
             }
-            columnTraverse = 0;
-        }
 
-        sumList.add(findSum(boardLeft, move));
-        printArray(boardLeft);
-        System.out.println("The sum is "+sumList.get(1));
 
-        // For a up move
-        move = "up";
-        for(int i = 0; i<tempBoard[0].length; i++){
-            boardUp[i] = tempBoard[i].clone();
-        }
-
-        for(int i = 0; i<boardUp.length; i++){
-            for(int j =0; j<boardUp[0].length; j++){
-                int firstFilledRow = findFilled(boardUp, j, i, move);
-                if(firstFilledRow == -1){
-                    break;
-                }
-                int firstEmptyRow = findEmpty(boardUp, j, i, move);
-                if(firstFilledRow != -1 && firstEmptyRow != -1 && firstFilledRow > firstEmptyRow){
-                    boardUp[firstEmptyRow][i] = boardUp[firstFilledRow][i];
-                    boardUp[firstFilledRow][i] = 0;
-                }
+            sumList.add(findSum(boardRight, move));
+            tempState.stateBoard = new int[tempBoard.length][tempBoard[0].length];
+            for (int i = 0; i < boardRight[0].length; i++) {
+                tempState.stateBoard[i] = boardRight[i].clone();
             }
-        }
+           // printArray(tempState.stateBoard);
+            //System.out.println("The sum is " + sumList.get(0));
+        } else if (move.equals("left")) {
 
+            // For a left move
+            move = "left";
+            for (int i = 0; i < tempBoard[0].length; i++) {
+                boardLeft[i] = tempBoard[i].clone();
+            }
+            int columnTraverse = 0;
+            for (int i = 0; i < row; i++) {
+                for (int j = 0; j < boardLeft[0].length; j++) {
+                    int firstFilledColumn = findFilled(boardLeft, i, columnTraverse, move);
+                    if (firstFilledColumn == -1) {
+                        break;
+                    }
+                    int firstEmptyColumn = findEmpty(boardLeft, i, columnTraverse, move);
+                    if (firstFilledColumn != -1 && firstEmptyColumn != -1 && firstFilledColumn > firstEmptyColumn) {
+                        boardLeft[i][firstEmptyColumn] = boardLeft[i][firstFilledColumn];
+                        boardLeft[i][firstFilledColumn] = 0;
+                    }
+                    columnTraverse += 1;
 
-        sumList.add(findSum(boardUp, move));
-        printArray(boardUp);
-        System.out.println("The sum is "+sumList.get(2));
-
-        // For a down move
-        move = "down";
-        for(int i = 0; i<tempBoard[0].length; i++){
-            boardDown[i] = tempBoard[i].clone();
-        }
-
-        for(int i = 0; i<boardDown[0].length; i++){
-            for(int j = boardDown.length - 1; j >= 0; j--){
-                int firstFilledRow = findFilled(boardDown, j, i, move);
-                if(firstFilledRow == -1){
-                    break;
                 }
-                int firstEmptyRow = findEmpty(boardDown, j, i, move);
-                if(firstFilledRow != -1 && firstEmptyRow != -1 && firstFilledRow < firstEmptyRow){
-                    boardDown[firstEmptyRow][i] = boardDown[firstFilledRow][i];
-                    boardDown[firstFilledRow][i] = 0;
+                columnTraverse = 0;
+            }
+
+            sumList.add(findSum(boardLeft, move));
+            for (int i = 0; i < boardLeft[0].length; i++) {
+                tempState.stateBoard[i] = boardLeft[i].clone();
+            }
+            //printArray(boardLeft);
+            //System.out.println("The sum is " + sumList.get(0));
+        } else if (move.equals("up")) {
+
+            // For a up move
+            move = "up";
+            for (int i = 0; i < tempBoard[0].length; i++) {
+                boardUp[i] = tempBoard[i].clone();
+            }
+
+            for (int i = 0; i < boardUp.length; i++) {
+                for (int j = 0; j < boardUp[0].length; j++) {
+                    int firstFilledRow = findFilled(boardUp, j, i, move);
+                    if (firstFilledRow == -1) {
+                        break;
+                    }
+                    int firstEmptyRow = findEmpty(boardUp, j, i, move);
+                    if (firstFilledRow != -1 && firstEmptyRow != -1 && firstFilledRow > firstEmptyRow) {
+                        boardUp[firstEmptyRow][i] = boardUp[firstFilledRow][i];
+                        boardUp[firstFilledRow][i] = 0;
+                    }
                 }
             }
+
+
+            sumList.add(findSum(boardUp, move));
+           // printArray(boardUp);
+            for (int i = 0; i < boardUp[0].length; i++) {
+                tempState.stateBoard[i] = boardUp[i].clone();
+            }
+          // System.out.println("The sum is " + sumList.get(0));
+        }else {
+            // For a down move
+            move = "down";
+            for (int i = 0; i < tempBoard[0].length; i++) {
+                boardDown[i] = tempBoard[i].clone();
+            }
+
+            for (int i = 0; i < boardDown[0].length; i++) {
+                for (int j = boardDown.length - 1; j >= 0; j--) {
+                    int firstFilledRow = findFilled(boardDown, j, i, move);
+                    if (firstFilledRow == -1) {
+                        break;
+                    }
+                    int firstEmptyRow = findEmpty(boardDown, j, i, move);
+                    if (firstFilledRow != -1 && firstEmptyRow != -1 && firstFilledRow < firstEmptyRow) {
+                        boardDown[firstEmptyRow][i] = boardDown[firstFilledRow][i];
+                        boardDown[firstFilledRow][i] = 0;
+                    }
+                }
+            }
+
+
+            sumList.add(findSum(boardDown, move));
+           // printArray(boardDown);
+            for (int i = 0; i < boardDown[0].length; i++) {
+                tempState.stateBoard[i] = boardDown[i].clone();
+            }
+          // System.out.println("The sum is " + sumList.get(0));
+
         }
-
-
-        sumList.add(findSum(boardDown, move));
-        printArray(boardDown);
-        System.out.println("The sum is "+sumList.get(3));
-
-
         return bestMove;
     }
 
@@ -346,5 +425,28 @@ public class Main {
             }
             System.out.println(" ");
         }
+    }
+}
+
+class State{
+    int[][] stateBoard;
+    int[][] prevBoard;
+    int nodeNum;
+    int visited = 0;
+    int sum = 0;
+    int nextStateNum = -1;
+
+    public State( int nodeNum){
+        this.nodeNum = nodeNum;
+    }
+}
+
+class Pair{
+    int first;
+    int second;
+
+    public Pair(int first, int second){
+        this.first = first;
+        this.second = second;
     }
 }
