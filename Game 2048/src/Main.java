@@ -1,84 +1,135 @@
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.*;
 
 public class Main {
 
     public static void main(String[] args) {
-        PriorityQueue<State> pq = new PriorityQueue<>((a, b) -> b.sum-a.sum);
+        int numOfInputs;
 
         int size = 4;
         int numOfMoves = 3;
         int numOfNodes = calculateNumOfNodes(numOfMoves, 4);
         int[][] board = new int[size][size];
-        int[] initTileValues = new int[]{2, 4, 8, 16};
-        int currStateNum = 1;
-        String move = "";
-        board = initArray(board, 8, size, initTileValues);
-        //board = new int[][]{ {2, 0, 2, 0},{0, 0, 4, 4}, {0, 4, 4, 4}, {0, 0, 0, 0}};
-        State root = new State( currStateNum);
-        root.stateBoard = board;
-        root.prevBoard = board;
-        LinkedList<State> queue = new LinkedList<State>();
-        root.visited = 1;
-        queue.add(root);
-        currStateNum++;
-        System.out.println(root.nodeNum);
-        while (queue.size() != 0 && currStateNum <= numOfNodes){
-            State currNode = queue.poll();
-            for(int i=0; i<4; i++){
-                if(i == 0){
-                    move = "up";
-                } else if (i == 1) {
-                    move = "down";
-                } else if (i == 2) {
-                    move = "left";
+        //int[] initTileValues = new int[]{2, 4, 8, 16};
+
+
+
+        int k = 0;
+        try {
+            File myObj = new File("/Users/aniquatabassum/Documents/AI Projects/Game 2048/src/2048_in.txt");
+            Scanner myReader = new Scanner(myObj);
+            numOfInputs = Integer.valueOf(myReader.nextLine());
+            System.out.println(numOfInputs);
+            for(int l=0; l<numOfInputs; l++) {
+                board = new int[size][size];
+                while (myReader.hasNext() && myReader.nextLine().isEmpty() == true) {
+                    String data = myReader.nextLine();
+                    String[] inputsForBoard = data.split(",");
+                    for(int j=0; j< board.length; j++){
+                        board[k][j] = Integer.valueOf(inputsForBoard[j].trim());
+                    }
+                    k+=1;
+                    if(k%4 == 0){
+                        k = 0;
+                        break;
+                    }
                 }
-                else {
-                    move = "right";
+
+                PriorityQueue<State> pq = new PriorityQueue<>((a, b) -> b.sum-a.sum);
+                StringBuilder reverse = new StringBuilder();
+                int currStateNum = 1;
+                String move = "";
+
+                State root = new State( currStateNum);
+                root.stateBoard = board;
+                root.prevBoard = board;
+                LinkedList<State> queue = new LinkedList<State>();
+                root.visited = 1;
+                queue.add(root);
+                currStateNum++;
+                // System.out.println(root.nodeNum);
+                while (queue.size() != 0 && currStateNum <= numOfNodes){
+                    State currNode = queue.poll();
+                    for(int i=0; i<4; i++){
+                        if(i == 0){
+                            move = "left";
+                        } else if (i == 1) {
+                            move = "right";
+                        } else if (i == 2) {
+                            move = "up";
+                        }
+                        else {
+                            move = "down";
+                        }
+                        System.out.println(move);
+                        State state = new State(currStateNum);
+                        state.prevNodeNum = currNode.nodeNum;
+                        state.prevBoard = currNode.stateBoard;
+                        state.prevSum = currNode.sum;
+                        state.stateBoard = new int[4][4];
+                        returnMove(state, move);
+                        addRandomTwo(state);
+                        queue.add(state);
+
+                       // System.out.println("parent is "+state.prevNodeNum);
+                       // System.out.println("I am "+state.nodeNum);
+                        //printArray(state.stateBoard);
+                        System.out.println("");
+                        if(currStateNum >= 22){
+                            pq.add(state);}
+                        currStateNum+=1;
+
+                    }
+
                 }
-                State state = new State(currStateNum);
-                state.prevBoard = currNode.stateBoard;
-                state.prevSum = currNode.sum;
-                state.stateBoard = new int[4][4];
-                returnMove(state, move);
-                addRandomTwo(state);
-                queue.add(state);
-                printArray(state.stateBoard);
+                State bestState = pq.remove();
 
-                System.out.println("");
-                if(currStateNum >= 22){
-                pq.add(state);}
-                currStateNum+=1;
+                System.out.println("Highest possible sum is "+bestState.sum+" and I am "+bestState.nodeNum);
+                int bestStateNum = bestState.nodeNum;
+                int remainder = 0;
+                String path = "";
+                String bestNum = Integer.toString(bestState.sum) + ", ";
+                System.out.println(" ");
+                for(int i=0; i<numOfMoves; i++){
+                    remainder = (int)(bestStateNum % 4);
+                    bestStateNum = (int) Math.ceil(bestStateNum / 4);
+                    if(remainder == 2){
+                        path+="L";
+                    } else if (remainder == 3) {
+                        path+="R";
+                    }
+                    else if (remainder == 0) {
+                        path+="U";
+                    }
+                    else if (remainder == 1) {
+                        path+="D";
+                    }
+                    if(bestStateNum != 0){
+                        path+=" ,";
+                    }
+                }
+                reverse.append(path);
+                reverse.reverse();
+                bestNum+= reverse.toString();
+                System.out.println(bestNum);
+                //System.out.println(bestState.nodeNum);
+                //printArray(bestState.stateBoard);
 
             }
-
+            myReader.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
         }
-       State bestState = pq.remove();
-        System.out.println("Highest possible sum is "+bestState.sum);
-        int bestStateNum = bestState.nodeNum;
-        int remainder = 0;
-       System.out.println(" ");
-        for(int i=0; i<numOfMoves; i++){
-            remainder = (int)(bestStateNum % 4);
-            bestStateNum = (int) Math.ceil(bestStateNum / 4);
-            if(remainder == 2){
-                System.out.print("U ");
-            } else if (remainder == 3) {
-                System.out.print("D ");
-            }
-            else if (remainder == 0) {
-                System.out.print("L ");
-            }
-            else if (remainder == 1) {
-                System.out.print("R ");
-            }
-        }
-       //returnMove(root, "up");
+        //board = new int[][]{ {2, 4, 4, 0},{16, 0, 0, 0}, {4, 8, 0, 0}, {2, 8, 0, 0}};
+
     }
 
     public static void addRandomTwo(State state){
         Random random = new Random();
         ArrayList<Pair> emptyIndices = returnEmptyIndices(state.stateBoard);
-        Pair pickedIndice = emptyIndices.get(random.nextInt(emptyIndices.size()));
+        Pair pickedIndice = emptyIndices.get(0);
         state.stateBoard[pickedIndice.first][pickedIndice.second] = 2;
     }
 
@@ -102,22 +153,16 @@ public class Main {
         return (int)Math.round(sum);
     }
 
-    public static int[][] initArray(int[][] board, int initBoardFillNum, int size, int[] initTileValues){
-        Random random = new Random();
-        Set<List<Integer>> setOfIndices = new HashSet<List<Integer>>();
-        int max = size;
-        int min = 0;
-        int initTileValuesSize = initTileValues.length;
-        for(int i=0; setOfIndices.size() != initBoardFillNum; i++){
-            int row = random.nextInt(max - min ) + min;
-            int column = random.nextInt(max - min ) + min;
-            setOfIndices.add(new ArrayList<>(Arrays.asList(row, column)));
-        }
-        for(List<Integer> indicePair : setOfIndices) {
-            int index = random.nextInt(initTileValuesSize);
-            board[indicePair.get(0)][indicePair.get(1)] = initTileValues[index];
-        }
-        return board;
+    public static void initArray(int[][] board, Scanner myReader){
+        int i = 0;
+            while (myReader.hasNext() && myReader.nextLine().isEmpty() == true ) {
+                String data = myReader.nextLine();
+                String[] inputsForBoard = data.split(",");
+                for(int j=0; j< board.length; j++){
+                    board[i][j] = Integer.valueOf(inputsForBoard[j].trim());
+                }
+                i+=1;
+            }
     }
 
     public static String returnMove(State tempState, String move){
@@ -252,6 +297,7 @@ public class Main {
           // System.out.println("The sum is " + sumList.get(0));
 
         }
+        System.out.println(tempState.sum);
         return bestMove;
     }
 
@@ -455,6 +501,7 @@ public class Main {
 
 class State{
     int[][] stateBoard;
+    int prevNodeNum = 0;
     int[][] prevBoard;
     int nodeNum;
     int visited = 0;
