@@ -1,5 +1,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 public class Main {
@@ -17,8 +19,17 @@ public class Main {
 
         int k = 0;
         try {
+
             File myObj = new File("/Users/aniquatabassum/Documents/AI Projects/Game 2048/src/2048_in.txt");
             Scanner myReader = new Scanner(myObj);
+            File outputFile = new File("/Users/aniquatabassum/Documents/AI Projects/Game 2048/src/output.txt");
+            FileWriter myWriter = new FileWriter("/Users/aniquatabassum/Documents/AI Projects/Game 2048/src/output.txt");
+
+            if (outputFile.createNewFile()) {
+                System.out.println("File created: " + outputFile.getName());
+            } else {
+                System.out.println("File already exists.");
+            }
             numOfInputs = Integer.valueOf(myReader.nextLine());
             System.out.println(numOfInputs);
             for(int l=0; l<numOfInputs; l++) {
@@ -89,7 +100,7 @@ public class Main {
                 int bestStateNum = bestState.nodeNum;
                 int remainder = 0;
                 String path = "";
-                String bestNum = Integer.toString(bestState.sum) + ", ";
+                String bestNum = Integer.toString(bestState.sum) + ",";
                 System.out.println(" ");
                 for(int i=0; i<numOfMoves; i++){
                     remainder = (int)(bestStateNum % 4);
@@ -106,19 +117,26 @@ public class Main {
                         path+="D";
                     }
                     if(bestStateNum != 0){
-                        path+=" ,";
+                        path+=",";
                     }
                 }
                 reverse.append(path);
                 reverse.reverse();
                 bestNum+= reverse.toString();
                 System.out.println(bestNum);
+                myWriter.write(bestNum);
+                myWriter.write("\n");
+
                 //System.out.println(bestState.nodeNum);
                 //printArray(bestState.stateBoard);
 
             }
             myReader.close();
+            myWriter.close();
         } catch (FileNotFoundException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        } catch (IOException e) {
             System.out.println("An error occurred.");
             e.printStackTrace();
         }
